@@ -11,31 +11,48 @@ struct thread {
 
 
 
-void value(int* var) {
-    if(var == NULL) {
-        printf("var is NULL");
-        exit(1);
-    }
-
-    var[0]++;
-}
+void value(int* value) { value[0]++; }
 
 void* func(void *arg) {
+
+    int* i = (int*) arg;
+
     fflush(stdout);
     if(arg == NULL) {
         printf("arg is NULL");
         exit(1);
     }
     
-    while(*((int*)arg) < 10) {
+    while(i[0] < 10) {
         fflush(stdout);
-        value((int*)arg);
-        printf("Thread value: %i\n", *((int*)arg));
+        value(i);
+        printf("Thread value1: %i\n", i[0]);
     }
 
-    printf("Thread finished\n");
+    printf("Thread1 finished\n");
     return NULL;
 }
+
+void* func2(void *arg) {
+
+    int* i = (int*) arg;
+
+    fflush(stdout);
+    if(arg == NULL) {
+        printf("arg is NULL");
+        exit(1);
+    }
+
+    while(i[0] < 20) {
+        fflush(stdout);
+        value(i);
+        printf("Thread2 value: %i\n", i[0]);
+    }
+
+    printf("Thread2 finished\n");
+    return NULL;
+}
+
 void create_thread(struct thread* t, void* (*func)(void*), void* arg) {
     if(t->id) {
         perror("thread already created");
@@ -55,6 +72,7 @@ void run_thread(struct thread* t) {
         perror("thread not created");
         exit(1);
     }
+
     printf("Throwing thread...\nThread response: \n");
     t->running = true;
     pthread_join(t->id, NULL);
@@ -63,11 +81,17 @@ void run_thread(struct thread* t) {
 int main() {
     
     printf("Hello, World!\n");
+
     int* meow = malloc(sizeof(int));
-    struct thread* t = malloc(sizeof(struct thread));
-    create_thread(t, (void* (*)(void*))func, meow);
-    run_thread(t);
-   
+    struct thread* t1 = malloc(sizeof(struct thread));
+    struct thread* t2 = malloc(sizeof(struct thread));
+
+    create_thread(t1, func, meow);
+    create_thread(t2, func2, meow);
+
+    run_thread(t1);
+    run_thread(t2);
+
     int i = 0;
 
     while(i < 10) {
@@ -78,7 +102,8 @@ int main() {
     printf("Main Thread finished\n");
 
     free(meow);
-    free(t);
+    free(t1);
+    free(t2);
     
     printf("Goodbye, World!\n");
     return 0;
